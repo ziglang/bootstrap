@@ -10,7 +10,7 @@ if(NOT EXISTS ${zig_EXE})
     message(FATAL_ERROR)
 endif()
 
-execute_process(COMMAND ${zig_EXE} ${ZIG_INSTALL_ARGS}
+execute_process(COMMAND env CC=clang ${zig_EXE} ${ZIG_INSTALL_ARGS}
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     RESULT_VARIABLE _result
 )

@@ -144,6 +144,7 @@ add_llvm_target(AMDGPUCodeGen
   GCNNSAReassign.cpp
   GCNDPPCombine.cpp
   SIModeRegister.cpp
+  sincos_netbsd_compat.c
 
   LINK_COMPONENTS
   Analysis

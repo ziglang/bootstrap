@@ -1,6 +1,8 @@
 #!/bin/sh
 
 set -e
+set -u
+set -x
 
 JOBS="$1"
 TARGET="$2" # Example: riscv64-linux-gnu
@@ -16,6 +18,7 @@ TARGET_OS_CMAKE=${TARGET_OS_AND_ABI%-*} # Example: linux
 case $TARGET_OS_CMAKE in
   macos) TARGET_OS_CMAKE="Darwin";;
   freebsd) TARGET_OS_CMAKE="FreeBSD";;
+  netbsd) TARGET_OS_CMAKE="NetBSD";;
   windows) TARGET_OS_CMAKE="Windows";;
   linux) TARGET_OS_CMAKE="Linux";;
   native) TARGET_OS_CMAKE="";;
@@ -53,8 +56,16 @@ make "$JOBS" install
 
 # Now we have Zig as a cross compiler.
 ZIG="$ROOTDIR/out/host/bin/zig"
-export CC="$ZIG cc -fno-sanitize=all -target $TARGET -mcpu=$MCPU"
-export CXX="$ZIG c++ -fno-sanitize=all -target $TARGET -mcpu=$MCPU"
+export CC="$ZIG cc -fno-sanitize=all -mcpu=$MCPU"
+export CXX="$ZIG c++ -fno-sanitize=all -mcpu=$MCPU"
+echo "#!/bin/sh
+env CC=\"clang\" $CC \"\$@\"" > $ROOTDIR/out/host/bin/zigcc
+echo "#!/bin/sh
+env CC=\"clang\" $CXX \"\$@\"" > $ROOTDIR/out/host/bin/zigcxx
+chmod +x $ROOTDIR/out/host/bin/zigcc
+chmod +x $ROOTDIR/out/host/bin/zigcxx
+export CC="$ROOTDIR/out/host/bin/zigcc"
+export CXX="$ROOTDIR/out/host/bin/zigcxx"
 
 # First cross compile zlib for the target, as we need the LLVM linked into
 # the finaly zig binary to have zlib support enabled.
@@ -129,6 +140,6 @@ cmake "$ROOTDIR/zig" \
   -DZIG_VERSION="$ZIG_VERSION" \
   -DZIG_USE_LLVM_CONFIG=OFF \
   -DZIG_STATIC_ZLIB=ON
+make "$JOBS" install
 unset CC
 unset CXX
-make "$JOBS" install
